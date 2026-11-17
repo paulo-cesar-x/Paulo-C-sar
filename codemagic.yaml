@@ -1,0 +1,34 @@
+workflows:
+  calculadora-ios-unsigned:
+    name: Calculadora iPhone - IPA sem assinatura
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      xcode: latest
+    scripts:
+      - name: Instalar XcodeGen
+        script: |
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+      - name: Testar a calculadora
+        script: |
+          swiftc Sources/CalculadoraXTool/CalculatorEngine.swift Tests/EngineSmokeTests.swift -o /tmp/calculadora-tests
+          /tmp/calculadora-tests
+      - name: Gerar projeto Xcode
+        script: |
+          xcodegen generate --spec project.yml
+      - name: Compilar para iPhone sem assinatura
+        script: |
+          xcodebuild -project CalculadoraXTool.xcodeproj -scheme CalculadoraXTool -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$CM_BUILD_DIR/DerivedData" CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" build
+      - name: Empacotar IPA para download
+        script: |
+          APP="$CM_BUILD_DIR/DerivedData/Build/Products/Release-iphoneos/Calculadora.app"
+          test -d "$APP"
+          mkdir -p "$CM_BUILD_DIR/output/Payload"
+          ditto "$APP" "$CM_BUILD_DIR/output/Payload/Calculadora.app"
+          cd "$CM_BUILD_DIR/output"
+          zip -q -r Calculadora-unsigned.ipa Payload
+          unzip -t Calculadora-unsigned.ipa
+    artifacts:
+      - output/Calculadora-unsigned.ipa
