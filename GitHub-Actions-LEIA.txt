@@ -1,0 +1,27 @@
+CALCULADORA IPHONE - BUILD VIA GITHUB ACTIONS
+
+PROJETO:
+C:\Users\paulo\Documents\Projetos\CalculadoraXTool
+
+CONTA GITHUB IDENTIFICADA:
+paulo-cesar-x
+
+STATUS:
+As bibliotecas do Swift 6.4.2 foram reparadas e os 10 testes do motor da calculadora passaram no WSL.
+Foi criada a automacao GitHub Actions para gerar Calculadora-unsigned.ipa em macOS com Xcode.
+Nao foi possivel publicar neste momento: a integracao GitHub conectada nao disponibiliza
+nenhum repositorio gravavel, e a maquina Windows nao tem o gh CLI autenticado.
+
+PASSOS PARA PUBLICAR NO GITHUB:
+1. Entre em https://github.com/new com sua conta paulo-cesar-x.
+2. Crie repositorio PRIVADO chamado calculadora-iphone (branch main; sem README inicial).
+3. Disponibilize esse repositorio na integracao GitHub do ChatGPT para concluir o envio.
+   Alternativamente use GitHub Desktop para publicar o projeto local no repositorio.
+4. O workflow .github/workflows/build-ipa.yml roda no primeiro push para main.
+5. Em GitHub > Actions > Compilar IPA iPhone > ultimo run > Artifacts,
+   baixe Calculadora-IPA-sem-assinatura.
+6. O zip do artifact contem Calculadora-unsigned.ipa.
+
+AVISO:
+IPA sem assinatura Apple nao pode ser instalado diretamente em iPhone comum.
+GitHub Actions em macOS pode consumir minutos faturaveis conforme o plano GitHub.

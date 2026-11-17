@@ -1,0 +1,63 @@
+name: Compilar IPA iPhone
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    name: Gerar Calculadora-unsigned.ipa
+    runs-on: macos-15
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+      - name: Verificar Xcode
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+      - name: Instalar XcodeGen
+        run: |
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+          xcodegen --version
+      - name: Validar motor de calculo
+        run: |
+          swiftc Sources/CalculadoraXTool/CalculatorEngine.swift Tests/EngineSmokeTests.swift -o "$RUNNER_TEMP/testes-calculadora"
+          "$RUNNER_TEMP/testes-calculadora"
+      - name: Gerar projeto Xcode
+        run: |
+          xcodegen generate --spec project.yml
+          xcodebuild -list -project CalculadoraXTool.xcodeproj
+      - name: Compilar aplicativo iOS sem assinatura
+        run: |
+          xcodebuild \
+            -project CalculadoraXTool.xcodeproj \
+            -scheme CalculadoraXTool \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+      - name: Empacotar IPA
+        run: |
+          APP_PATH="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos/Calculadora.app"
+          test -d "$APP_PATH"
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          ditto "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/Calculadora.app"
+          cd "$RUNNER_TEMP/ipa"
+          zip -q -r "$GITHUB_WORKSPACE/Calculadora-unsigned.ipa" Payload
+          unzip -t "$GITHUB_WORKSPACE/Calculadora-unsigned.ipa"
+          ls -lh "$GITHUB_WORKSPACE/Calculadora-unsigned.ipa"
+      - name: Disponibilizar IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Calculadora-IPA-sem-assinatura
+          path: Calculadora-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7
